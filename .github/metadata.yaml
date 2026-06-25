@@ -1,0 +1,9 @@
+# .github/metadata.yaml
+description: "The owning envelope for foreign memory: a move-only Memory.Foreign value that releases provider-supplied buffers exactly once on drop."
+topics:
+  - primitives
+  - memory
+  - ownership
+homepage: "https://swift-institute.org"
+readme:
+  family: E

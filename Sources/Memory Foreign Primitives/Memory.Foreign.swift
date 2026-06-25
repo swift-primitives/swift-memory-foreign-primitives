@@ -20,10 +20,14 @@ extension Memory {
     /// this process did **not** allocate, owned past the lending scope, and released by
     /// invoking a provider-supplied finalizer — never by `deallocate`. It is the
     /// institute shape of the pattern every production datapath converges on (FreeBSD
-    /// `m_ext_free_t`, Linux `skb` destructors, DPDK external-buffer callbacks, io_uring
-    /// provided-buffer re-provision): a per-buffer release callback owned by the buffer
-    /// value, with `~Copyable` uniqueness replacing the hand-maintained refcount —
-    /// exactly-once release is structural, not counted.
+    /// `m_ext_free_t`, Linux `skb` destructors, DPDK external-buffer callbacks; for
+    /// io_uring provided buffers the callback is the consumer's own re-provide closure
+    /// over the custody window): a per-buffer release callback owned by the buffer
+    /// value, with `~Copyable` uniqueness replacing the hand-maintained refcount for
+    /// 1:1 buffer-to-consumer custody — exactly-once release is structural, not
+    /// counted. What refcounts additionally fund — N references sharing one region
+    /// (DPDK external-buffer carving, `skb_clone`) — is deliberately out of this
+    /// regime's scope; sharing, if ever wanted, is rebuilt at a higher tier.
     ///
     /// The value is `Span.Raw.Mutable` (the storable raw descriptor) + the finalizer +
     /// move-only ownership. Its entire tower integration is the `Memory.Region`
@@ -62,13 +66,15 @@ extension Memory {
     ///
     /// ## Layout note
     ///
-    /// Not `@frozen`, matching the regime-family precedent (`Memory.Heap`): no package
-    /// builds with library evolution today, and the Optional finalizer field exists only
-    /// because `discard self` requires trivially-destroyed stored properties on current
-    /// toolchains — a constraint the compiler diagnostics mark "at this time". Freezing
-    /// would lock the workaround in; revisit at the publication gate.
+    /// `@frozen` per [API-IMPL-022] (tower value types ship `@frozen` from birth):
+    /// without it, cross-module consuming decomposition — exactly `take()`'s shape — is
+    /// illegal. Layout solidifies at first tag (none this phase), so the Optional
+    /// finalizer field — a workaround for `discard self` requiring trivially-destroyed
+    /// stored properties "at this time" — can still be retired pre-publication if the
+    /// toolchain wall falls.
     ///
     /// Design: `swift-institute/Research/memory-foreign-and-memory-protocol.md` (v1.1.0).
+    @frozen
     public struct Foreign: ~Copyable {
         /// The adopted region — the non-owning descriptor this value owns the bytes of.
         @usableFromInline
@@ -84,8 +90,7 @@ extension Memory {
         @usableFromInline
         internal var _finalizer: ((Span.Raw.Mutable) -> Void)?
 
-        /// Adopts a foreign region: claims ownership of `region`'s bytes and registers
-        /// the release callback.
+        /// Adopts a foreign region, claiming ownership of its bytes and registering the release callback.
         ///
         /// See the type-level Adoption contract for the obligations this claim asserts.
         ///
@@ -101,25 +106,28 @@ extension Memory {
             self._finalizer = finalizer
         }
 
-        /// Transfers custody out without invoking the finalizer, for re-wrapping at
-        /// representation boundaries.
-        ///
-        /// The ownership claim made at adoption travels with the returned pair; the
-        /// caller (or the next adopter) becomes responsible for exactly-once release.
-        @inlinable
-        public consuming func take() -> (
-            region: Span.Raw.Mutable,
-            finalizer: (Span.Raw.Mutable) -> Void
-        ) {
-            // A live value always holds a finalizer (`_finalizer` is nil only after
-            // `take()`, and `take()` consumes self), so the unwrap cannot fail.
-            let finalizer = _finalizer!
-            _finalizer = nil
-            return (_region, finalizer)
-        }
-
         deinit {
             if let finalizer = _finalizer { finalizer(_region) }
         }
+    }
+}
+
+extension Memory.Foreign {
+    /// Transfers custody out without invoking the finalizer, for re-wrapping at
+    /// representation boundaries.
+    ///
+    /// The ownership claim made at adoption travels with the returned pair; the
+    /// caller (or the next adopter) becomes responsible for exactly-once release.
+    @inlinable
+    public consuming func take() -> (
+        region: Span.Raw.Mutable,
+        finalizer: (Span.Raw.Mutable) -> Void
+    ) {
+        // A live value always holds a finalizer (`_finalizer` is nil only after
+        // `take()`, and `take()` consumes self), so the unwrap cannot fail.
+        // swift-format-ignore: NeverForceUnwrap
+        let finalizer = _finalizer!
+        _finalizer = nil
+        return (_region, finalizer)
     }
 }

@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Memory_Primitive
 public import Memory_Address_Primitives
+public import Memory_Primitive
 public import Memory_Region_Primitives
 public import Span_Raw_Primitives
 
@@ -28,6 +28,7 @@ extension Memory.Foreign: Memory.Region {
         // SAFETY: non-empty precondition excludes the sentinel; the address is valid for
         // SAFETY: this value's lifetime by the adoption contract. The integer-address
         // SAFETY: model carries no provenance. [MEM-SAFE-025a]
+        // swift-format-ignore: NeverForceUnwrap
         unsafe Memory.Address(_region.base.nonNull.baseAddress!)
     }
 
