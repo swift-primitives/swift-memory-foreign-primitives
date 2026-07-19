@@ -113,9 +113,11 @@ extension Memory.Foreign.Test.EdgeCase {
 
 // MARK: - Integration
 
-/// The other isolation domain. The Foreign arrives as `consuming sending` and is dropped
-/// at the end of this isolated method — the finalizer runs here, not where the value was
-/// made ([MEM-SEND-010]/[MEM-SEND-012]; per-send region checking, no Sendable promise).
+/// The other isolation domain.
+///
+/// The Foreign arrives as `consuming sending` and is dropped at the end of this
+/// isolated method — the finalizer runs here, not where the value was made
+/// ([MEM-SEND-010]/[MEM-SEND-012]; per-send region checking, no Sendable promise).
 private actor Sink {
     func consume(_ foreign: consuming sending Memory.Foreign) {
         _ = foreign.capacity
