@@ -24,7 +24,7 @@ extension Memory.Foreign {
     @Suite
     struct Test {
         @Suite struct Unit {}
-        @Suite struct EdgeCase {}
+        @Suite struct `Edge Case` {}
         @Suite struct Integration {}
     }
 }
@@ -80,7 +80,7 @@ extension Memory.Foreign.Test.Unit {
 
 // MARK: - Edge cases
 
-extension Memory.Foreign.Test.EdgeCase {
+extension Memory.Foreign.Test.`Edge Case` {
     @Test
     func `single-byte region is valid`() {
         let census = Memory.Foreign.Census()
@@ -118,7 +118,9 @@ extension Memory.Foreign.Test.EdgeCase {
 /// The Foreign arrives as `consuming sending` and is dropped at the end of this
 /// isolated method — the finalizer runs here, not where the value was made
 /// ([MEM-SEND-010]/[MEM-SEND-012]; per-send region checking, no Sendable promise).
-private actor Sink {
+private actor Sink {}
+
+extension Sink {
     func consume(_ foreign: consuming sending Memory.Foreign) {
         _ = foreign.capacity
     }

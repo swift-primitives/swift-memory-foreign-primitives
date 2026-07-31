@@ -41,15 +41,17 @@ extension Memory.Foreign {
         private let _invocations = Atomic<Int>(0)
 
         public init() {}
+    }
+}
 
-        /// The number of finalizer invocations recorded so far.
-        public var invocations: Int {
-            _invocations.load(ordering: .sequentiallyConsistent)
-        }
+extension Memory.Foreign.Census {
+    /// The number of finalizer invocations recorded so far.
+    public var invocations: Int {
+        _invocations.load(ordering: .sequentiallyConsistent)
+    }
 
-        /// Records one finalizer invocation.
-        public func record() {
-            _invocations.wrappingAdd(1, ordering: .relaxed)
-        }
+    /// Records one finalizer invocation.
+    public func record() {
+        _invocations.wrappingAdd(1, ordering: .relaxed)
     }
 }
