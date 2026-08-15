@@ -99,7 +99,8 @@ extension Memory.Foreign.Test.`Edge Case` {
             var retained: Owner? = Owner()
             observed = retained
             let raw = UnsafeMutableRawBufferPointer.allocate(byteCount: 16, alignment: 16)
-            let foreign = unsafe Memory.Foreign(adopting: unsafe .init(raw)) { [owner = retained] region in
+            let foreign = unsafe Memory.Foreign(adopting: unsafe .init(raw)) {
+                [owner = retained] region in
                 _ = owner
                 unsafe region.base.nullable.deallocate()
             }
@@ -128,7 +129,9 @@ extension Sink {
 
 extension Memory.Foreign.Test.Integration {
     @Test
-    func `non-Sendable Foreign crosses isolation as consuming sending and finalizes exactly once`() async {
+    func `non-Sendable Foreign crosses isolation as consuming sending and finalizes exactly once`()
+        async
+    {
         let census = Memory.Foreign.Census()
         let foreign = Memory.Foreign.fixture(byteCount: 64, census: census)
         let sink = Sink()
