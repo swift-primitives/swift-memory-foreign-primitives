@@ -1,24 +1,6 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-primitives open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-primitives project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Memory_Foreign_Primitives
 import Memory_Foreign_Primitives_Test_Support
 import Testing
-
-// The foreign regime leaf: an owning envelope (`Span.Raw.Mutable` + finalizer +
-// `~Copyable` uniqueness) over memory this process did not allocate, conforming the
-// `Memory.Region` seam. These tests cover the envelope's own surface — adoption,
-// exactly-once release, custody transfer, and region-isolation crossing. Storage-tier
-// composition over the `Memory.Region` seam is exercised by the
-// foreign-region-tower-instantiation experiment (swift-buffer-ring-primitives).
 
 extension Memory.Foreign {
     @Suite
@@ -28,8 +10,6 @@ extension Memory.Foreign {
         @Suite struct Integration {}
     }
 }
-
-// MARK: - Unit
 
 extension Memory.Foreign.Test.Unit {
     @Test
@@ -78,8 +58,6 @@ extension Memory.Foreign.Test.Unit {
     }
 }
 
-// MARK: - Edge cases
-
 extension Memory.Foreign.Test.`Edge Case` {
     @Test
     func `single-byte region is valid`() {
@@ -112,13 +90,6 @@ extension Memory.Foreign.Test.`Edge Case` {
     }
 }
 
-// MARK: - Integration
-
-/// The other isolation domain.
-///
-/// The Foreign arrives as `consuming sending` and is dropped at the end of this
-/// isolated method — the finalizer runs here, not where the value was made
-/// ([MEM-SEND-010]/[MEM-SEND-012]; per-send region checking, no Sendable promise).
 private actor Sink {}
 
 extension Sink {
